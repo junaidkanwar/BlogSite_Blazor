@@ -1,0 +1,242 @@
+﻿@page "/contact/{username}"
+@inject IJSRuntime js
+@using BlogSite.Models
+@inject Data.ContactMessageService ContactMessageService
+@inject NavigationManager NavigationManager
+@inject UserState UserState
+@inject BlogSite.Data.UserService UserService
+@layout MainLayout
+
+@if (username == null)
+{
+    <div class="container text-center py-5 my-5">
+        <h2>You're not logged in</h2>
+        <p>Kindly Login to Gain Access</p>
+        <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+    </div>
+}
+else
+{
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow fixed-top">
+    <div class="container">
+            <a class="navbar-brand" @onclick="GoToHome">2J BLOGS.</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" @onclick="GoToHome">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToMyBlogs">My Blogs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToAbout">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToContact">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link">@username</span>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-danger" @onclick="SignOut">Sign Out</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+    <section class="py-5">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center mb-5">
+                <h1 class="page-title">Contact us</h1>
+                
+            </div>
+        </div>
+        <div class="row gy-4">
+            <div class="col-md-4">
+                <div class="info-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <h3>Address</h3>
+                    <address>Air University</address>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-item info-item-borders">
+                    <i class="bi bi-phone"></i>
+                    <h3>Phone Number</h3>
+                    <p><a href="tel:+923030303030">+92 303 0303030</a></p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-item">
+                    <i class="bi bi-envelope"></i>
+                    <h3>Email</h3>
+                    <p><a href="mailto:2JBlogs@gmail.com">2JBlogs@gmail.com</a></p>
+                </div>
+            </div>
+        </div>
+        <div class="form mt-5">
+            <EditForm Model="contactMessage" OnValidSubmit="SendMessage">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <InputText @bind-Value="contactMessage.Name" class="form-control" placeholder="Your Name" />
+                    </div>
+                    <div class="form-group col-md-6">
+                        <InputText @bind-Value="contactMessage.Email" type="email" class="form-control" placeholder="Your Email" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <InputTextArea @bind-Value="contactMessage.Message" class="form-control" rows="5" placeholder="Message" />
+                </div>
+                <div class="my-3">
+                    @if (isLoading)
+                    {
+                        <div class="loading">Loading...</div>
+                    }
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="error-message">@errorMessage</div>
+                    }
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="sent-message">@successMessage</div>
+                    }
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</section>
+}
+
+@code {
+    private ContactMessageModel contactMessage = new ContactMessageModel();
+    private List<BlogModel> blogs;
+    private bool isLoading = false;
+    private string successMessage;
+    private string errorMessage;
+    private int user_id { get; set; }
+    [Parameter]
+    public string userUsername { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized(); // Call the base class method if needed
+
+        try
+        {
+            // You can perform initialization logic here
+            // For example, fetching data from services or initializing variables
+
+            // Fetch user details based on the provided username
+            var user = UserService.GetUserByUsername(username);
+            if (user != null)
+            {
+                user_id = user.UserId;
+                // You can perform additional initialization based on the retrieved user if needed
+            }
+            else
+            {
+                // Handle the case where the user is not found
+                NavigationManager.NavigateTo($"/error");
+            }
+
+            // Fetch other data or perform any necessary initialization here
+            // For example, fetching 
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that might occur during initialization
+            Console.WriteLine($"An error occurred during initialization: {ex.Message}");
+            // Optionally, navigate to an error page
+            
+        }
+    }
+ 
+    private void SendMessage()
+    {
+        isLoading = true;
+        successMessage = string.Empty;
+        errorMessage = string.Empty;
+
+        try
+        {
+            contactMessage.CreatedAt = DateTime.Now;
+            bool result = ContactMessageService.SubmitContactMessage(contactMessage);
+
+            if (result)
+            {
+                successMessage = "Your message has been sent. Thank you!";
+                contactMessage = new ContactMessageModel(); // Reset the form
+            }
+            else
+            {
+                errorMessage = "There was an error sending your message. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+
+        isLoading = false;
+    }
+
+    [Parameter]
+    public string username { get; set; }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo($"/Home/{username}");
+    }
+
+    private void GoToMyBlogs()
+    {
+        NavigationManager.NavigateTo($"/myblogs/{username}");
+    }
+
+    private void GoToAbout()
+    {
+        NavigationManager.NavigateTo($"/about/{username}");
+    }
+
+    private void GoToContact()
+    {
+        NavigationManager.NavigateTo($"/contact/{username}");
+    }
+
+
+    private void SignOut()
+    {
+        UserState.UserID = 0;
+        NavigationManager.NavigateTo("/");
+    }
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
+
+
+<style>
+    section {
+        padding: 60px 0; /* Add padding at the top and bottom */
+    }
+
+    <style >
+    #contact {
+        color: black; /* Change text color to black */
+    }
+</style>
+</style>

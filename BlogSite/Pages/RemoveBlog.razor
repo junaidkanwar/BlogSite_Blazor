@@ -1,0 +1,182 @@
+﻿@page "/removeblogs/{username}"
+@inject BlogService BlogService
+@inject NavigationManager NavigationManager
+@using BlogSite.Models
+@inject BlogSite.Data.UserService UserService
+@layout NoMenuLayout
+
+
+@if (username == null)
+{
+    <div class="container text-center py-5 my-5">
+        <h2>You're not logged in</h2>
+        <p>Kindly Login to Gain Access</p>
+        <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+    </div>
+}
+else
+{
+
+<div class="admin-dashboard">
+    <div class="sidebar">
+        <h2>Dashboard</h2>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="#submit-blog" @onclick="GoToPost">Post a Blog</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#edit-blogs" @onclick="GoToRemoveBlogs">Remove Blogs</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#home" @onclick="GoToHome">Back to Home</a>
+            </li>
+        </ul>
+    </div>
+    <div class="content">
+        <h3>Remove Blogs</h3>
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="alert alert-success" role="alert">
+                @message
+            </div>
+        }
+        <div class="blog-list">
+            @foreach (var blog in userBlogs)
+            {
+                <div class="blog-item">
+                    <span>@blog.Title</span>
+                    <button class="btn btn-danger" @onclick="(() => DeleteBlog(blog.BlogId))">Delete</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+}
+
+<style>
+    .admin-dashboard {
+        display: flex;
+        height: 100vh;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #343a40;
+        color: white;
+        padding: 20px;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+
+    .nav-link {
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+    }
+
+        .nav-link:hover {
+            background-color: #495057;
+            color: white;
+        }
+
+    .content {
+        flex: 1;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+
+    .blog-list {
+        margin-top: 20px;
+    }
+
+    .blog-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+        .blog-item span {
+            font-size: 16px;
+        }
+</style>
+
+@code {
+    private List<BlogModel> userBlogs = new List<BlogModel>();
+    private int userId;
+    private string message = "";
+
+    [Parameter]
+    public string username { get; set; }
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                // Handle case where username is null or empty
+                NavigationManager.NavigateTo("/error");
+                return;
+            }
+
+            var user = UserService.GetUserByUsername(username);
+            if (user != null)
+            {
+                userId = user.UserId;
+                userBlogs = BlogService.GetBlogsByUserId(userId);
+            }
+            else
+            {
+                // Handle the case where the user is not found
+                NavigationManager.NavigateTo("/error");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any unexpected exceptions
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            
+        }
+    }
+
+
+    private void DeleteBlog(int blogId)
+    {
+        bool success = BlogService.RemoveBlog(blogId);
+        if (success)
+        {
+            // Refresh the blog list after successful removal
+            userBlogs = BlogService.GetBlogsByUserId(userId);
+            message = "Blog removed successfully.";
+        }
+        else
+        {
+            message = "Failed to remove the blog.";
+        }
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo($"/Home/{username}");
+    }
+
+    private void GoToRemoveBlogs()
+    {
+        NavigationManager.NavigateTo($"/editblog/{username}");
+    }
+
+    private void GoToPost()
+    {
+        NavigationManager.NavigateTo($"/dashboard/{username}");
+    }
+
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

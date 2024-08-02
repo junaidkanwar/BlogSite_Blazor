@@ -1,0 +1,152 @@
+﻿@page "/about/{username}"
+@inject IJSRuntime js
+@inject BlogSite.Data.UserService UserService
+@inject NavigationManager NavigationManager
+@inject UserState UserState
+@inject BlogSite.Data.UserService UserService
+@layout MainLayout
+
+
+@if (username == null)
+{
+    <div class="container text-center py-5 my-5">
+        <h2>You're not logged in</h2>
+        <p>Kindly Login to Gain Access</p>
+        <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+    </div>
+}
+else
+{
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow fixed-top">
+    <div class="container">
+            <a class="navbar-brand" @onclick="GoToHome">2J BLOGS.</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" @onclick="GoToHome">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToMyBlogs">My Blogs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToAbout">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToContact">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link">@username</span>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-danger" @onclick="SignOut">Sign Out</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+    <section class="py-5">
+        <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center mb-5">
+                <h1 class="page-title">About Us</h1>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">2J Blogs</h5
+                <p class="card-text">Welcome to 2J Blogs, your go-to destination for insightful, engaging, and diverse content. Founded by two passionate bloggers, Kanwar Junaid and Jasim Ibrahim, 2J Blogs is dedicated to bringing you the latest in lifestyle, technology, travel, and more. Our mission is to inform, inspire, and entertain our readers through well-researched articles, personal stories, and expert advice.
+
+At 2J Blogs, we believe in the power of words to connect people and share knowledge. Whether you're looking for tips on improving your daily routine, updates on the newest tech trends, or travel guides to your next adventure, we've got you covered. Join our community of curious minds and discover a world of information, one blog post at a time.
+
+Thank you for being a part of our journey. Happy reading!</p>
+                
+            </div>
+        </div>
+
+    </div>
+</section>
+}
+@code {
+    private List<BlogModel> blogs = new List<BlogModel>();
+    private int user_id { get; set; }
+    private string userUsername { get; set; } // Rename parameter
+
+    [Parameter]
+    public string username { get; set; } // Keep the parameter name as it is
+
+    [CascadingParameter]
+    public string userEmail { get; set; }
+
+     // Keep the parameter name as it is
+    protected override void OnInitialized()
+    {
+        base.OnInitialized(); // Call the base class method if needed
+
+        try
+        {
+            // You can perform initialization logic here
+            // For example, fetching data from services or initializing variables
+
+            // Fetch user details based on the provided username
+            var user = UserService.GetUserByUsername(username);
+            if (user != null)
+            {
+                user_id = user.UserId;
+                // You can perform additional initialization based on the retrieved user if needed
+            }
+            else
+            {
+                // Handle the case where the user is not found
+                NavigationManager.NavigateTo($"/error");
+            }
+
+            // Fetch other data or perform any necessary initialization here
+            // For example, fetching 
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that might occur during initialization
+            Console.WriteLine($"An error occurred during initialization: {ex.Message}");
+            // Optionally, navigate to an error page
+            
+        }
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo($"/Home/{username}");
+    }
+
+    private void GoToMyBlogs()
+    {
+        NavigationManager.NavigateTo($"/myblogs/{username}");
+    }
+
+    private void GoToAbout()
+    {
+        NavigationManager.NavigateTo($"/about/{username}");
+    }
+
+    private void GoToContact()
+    {
+        NavigationManager.NavigateTo($"/contact/{username}");
+    }
+
+
+    private void SignOut()
+    {
+        UserState.UserID = 0;
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,107 @@
+﻿@page "/signup"
+@inject BlogSite.Data.UserService UserService
+@inject NavigationManager NavigationManager
+@using BlogSite.Models
+@inject UserState UserState
+@layout NoMenuLayout
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-6 col-md-7 intro-section">
+            <div class="brand-wrapper"></div>
+            <div class="intro-content-wrapper">
+                <h1 class="intro-title">Welcome to 2J-BLOGS!</h1>
+                <p class="intro-text">
+                    2J Blogs: Your gateway to insightful content and engaging discussions. Explore diverse topics and discover fresh perspectives with us.
+                </p>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-5 form-section">
+            <div class="login-wrapper">
+                <h2 class="login-title">Sign Up</h2>
+                <EditForm Model="newUser" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label for="username" class="sr-only">Username</label>
+                        <InputText id="username" class="form-control" placeholder="Username" @bind-Value="newUser.Username" />
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="sr-only">Email</label>
+                        <InputText type="email" id="email" class="form-control" placeholder="Email" @bind-Value="newUser.Email" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="password" class="sr-only">Password</label>
+                        <InputText type="password" id="password" class="form-control" placeholder="Password" @bind-Value="newUser.Password" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="confirm-password" class="sr-only">Confirm Password</label>
+                        <InputText type="password" id="confirm-password" class="form-control" placeholder="Confirm Password" @bind-Value="confirmPassword" />
+                    </div>
+
+                    <!-- Display error if passwords do not match -->
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">
+                            @errorMessage
+                        </div>
+                    }
+                    <!-- Display success message if registration successful -->
+                    @if (registrationSuccess)
+                    {
+                        <div class="alert alert-success">
+                            Registered Successfully
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between align-items-center mb-5">
+                        <button type="submit" class="btn login-btn">Sign Up</button>
+                    </div>
+                </EditForm>
+
+                <p class="login-wrapper-footer-text">Already a Member? <a href="" class="text-reset">Sign in Here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private UserModel newUser = new UserModel();
+    private string confirmPassword;
+    private string errorMessage;
+    private bool registrationSuccess = false;
+
+    private async Task HandleValidSubmit()
+{
+    // Check if passwords match
+    if (newUser.Password != confirmPassword)
+    {
+        errorMessage = "Passwords do not match.";
+        return;
+    }
+
+    bool isRegistered =  UserService.RegisterUser(newUser);
+    if (isRegistered)
+    {
+            UserState.UserID = 1;
+        // Clear the error message
+        errorMessage = string.Empty;
+
+        // Set registration success flag
+        registrationSuccess = true;
+
+            string username = UserService.GetUsernameByEmail(newUser.Email);
+        // Clear the user registration form
+        newUser = new UserModel();
+        confirmPassword = string.Empty;
+            
+            NavigationManager.NavigateTo($"/Home/{username}");
+    }
+    else
+    {
+        // Handle registration failure, e.g., show an error message
+        errorMessage = "Registration failed. Please try again.";
+    }
+}
+}

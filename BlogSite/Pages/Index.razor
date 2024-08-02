@@ -1,0 +1,210 @@
+﻿@page "/Home/{username}"
+@inject NavigationManager NavigationManager
+@inject BlogService BlogService
+@inject BlogSite.Data.UserService UserService
+@inject UserState UserState
+@using BlogSite.Models
+@layout MainLayout
+
+
+@if (UserState.UserID == 1)
+{
+    @if (username == null && UserState.UserID == 0)
+    {
+        <div class="container text-center py-5 my-5">
+            <h2>You're not logged in</h2>
+            <p>Kindly Login to Gain Access</p>
+            <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+        </div>
+    }
+    else
+    {
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow fixed-top">
+            <div class="container">
+                <a class="navbar-brand" @onclick="GoToHome">2J BLOGS.</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" @onclick="GoToHome">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" @onclick="GoToMyBlogs">My Blogs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" @onclick="GoToAbout">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" @onclick="GoToContact">Contact</a>
+                        </li>
+                        <li class="nav-item">
+                            <span class="nav-link">@username</span>
+                        </li>
+                        <li class="nav-item">
+                            <button class="btn btn-danger" @onclick="SignOut">Sign Out</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <header class="masthead">
+            <div class="container h-100">
+                <div class="row h-100 align-items-center">
+                    <div class="col-12 text-center">
+                        <h1 class="fw-light">A Single Place Where You Can...</h1>
+                        <p class="lead">Publish, Read & Give Opinions on Blogs</p>
+                        <button class="btn btn-primary" @onclick="OpenDashboard">Open Dashboard</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="py-5">
+            <div class="container">
+                <h2 class="fw-light">Available Blogs</h2>
+                <div class="row">
+                    @foreach (var blog in blogs)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card blog-card" @onclick="() => ViewBlog(blog.BlogId)">
+                                <div class="card-body">
+                                    <h5 class="card-title">@blog.Title</h5>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+}
+else
+{
+    <p> This page can't be accessed Please login first'</p>
+    <a href="">LOGIN NOW</a>
+}
+
+@code {
+    private List<BlogModel> blogs = new List<BlogModel>();
+    private int user_id { get; set; }
+    private string userUsername { get; set; } // Rename parameter
+
+    [Parameter]
+    public string username { get; set; } // Keep the parameter name as it is
+
+    [Parameter]
+    public string User_ID { get; set; }
+
+    protected override void OnInitialized()
+    {
+
+        var user = UserService.GetUserById(user_id);
+        if (user != null)
+        {
+            userUsername = user.Username; // Update to use the renamed parameter
+        }
+
+        blogs = BlogService.GetAllBlogs();
+
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo($"/Home/{username}");
+    }
+
+    private void GoToMyBlogs()
+    {
+        NavigationManager.NavigateTo($"/myblogs/{username}");
+    }
+
+    private void GoToAbout()
+    {
+        NavigationManager.NavigateTo($"/about/{username}");
+    }
+
+    private void GoToContact()
+    {
+        NavigationManager.NavigateTo($"/contact/{username}");
+    }
+
+    private void ViewBlog(int blogId)
+    {
+        NavigationManager.NavigateTo($"/blog/{blogId}/{username}");
+    }
+
+    private void SignOut()
+    {
+        UserState.UserID = 0;
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void OpenDashboard()
+    {
+        NavigationManager.NavigateTo($"/dashboard/{username}");
+    }
+
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
+
+
+<style>
+    .background-wrapper {
+        background-image: url('/images/body2.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        padding-top: 20px;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+
+    .masthead {
+        background-image: url('/images/card_image.jpg'); /* Replace 'your-image.jpg' with the path to your image */
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 80vh; /* Adjust the height as needed */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000; /* Text color set to black */
+        text-align: center;
+        padding: 20px;
+    }
+
+        .masthead h1 {
+            font-weight: bold; /* Make the heading bold */
+            font-size: 2.5rem; /* Adjust the font size as needed */
+        }
+
+        .masthead p {
+            font-size: 1.1rem; /* Adjust the font size as needed */
+            margin-bottom: 1.5rem;
+        }
+
+        .masthead .btn {
+            font-size: 1rem; /* Adjust the font size as needed */
+            padding: 10px 20px;
+        }
+
+
+</style>

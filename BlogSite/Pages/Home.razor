@@ -1,0 +1,85 @@
+﻿@inject IJSRuntime js
+@inject NavigationManager NavigationManager
+
+<!-- Full Page Image Header with Vertically Centered Content -->
+<header class="masthead">
+    <div class="container h-100">
+        <div class="row h-100 align-items-center">
+            <div class="col-12 text-center">
+                <h1 class="fw-light">A Single Place Where You Can...</h1>
+                <p class="lead">Publish, Read & Give Opinions on Blogs</p>
+                <!-- Button -->
+                <button class="btn btn-primary">Open Dashboard</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Content -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="fw-light">Available Blogs</h2>
+        <!-- Container for displaying blogs -->
+        <div class="row">
+            @foreach (var blog in blogs)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card blog-card" @onclick="() => ViewBlog(blog.Id)">
+                        <div class="card-body">
+                            <h5 class="card-title">@blog.Title</h5>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    // List of blogs (replace this with actual data fetched from the database)
+    List<Blog> blogs = new List<Blog>
+    {
+        new Blog { Id = 1, Title = "Blog 1" },
+        new Blog { Id = 2, Title = "Blog 2" },
+        new Blog { Id = 3, Title = "Blog 3" }
+    };
+
+    // Method to navigate to the page showing the full content of the selected blog
+    private void ViewBlog(int blogId)
+    {
+        NavigationManager.NavigateTo($"/blog/{blogId}");
+    }
+
+    // Blog class definition (replace this with your actual Blog class)
+    public class Blog
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        // Add other properties as needed
+    }
+}
+
+<style>
+    .masthead {
+        height: 80vh; /* Reduced from 100vh to 80vh */
+        min-height: 400px; /* Reduced minimum height */
+        background-image: url('/images/card_image.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        /* Set background color with opacity */
+        background-color: rgba(0, 0, 0, 0.1); /* Adjust opacity value (0.1 for 10% opacity) */
+    }
+
+    .card {
+        background-color: #f8f9fa; /* Light grey background color */
+    }
+
+    .masthead h1 {
+        font-weight: bold; /* Apply bold font weight only to the h1 element within the masthead */
+    }
+
+    .masthead p {
+        font-weight: bold; /* Apply bold font weight to headings and paragraphs within the masthead */
+    }
+</style>

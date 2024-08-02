@@ -1,0 +1,239 @@
+﻿@page "/blog/{blogId}/{username}"
+@inject IJSRuntime js
+@inject NavigationManager NavigationManager
+@inject BlogService BlogService
+@inject CommentService CommentService
+@inject BlogSite.Data.UserService UserService
+@inject UserState UserState
+@using BlogSite.Models
+@layout MainLayout
+
+@if (username == null)
+{
+    <div class="container text-center py-5 my-5">
+        <h2>You're not logged in</h2>
+        <p>Kindly Login to Gain Access</p>
+        <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+    </div>
+}
+else
+{
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow fixed-top">
+        <div class="container">
+            <a class="navbar-brand" @onclick="GoToHome">2J BLOGS.</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" @onclick="GoToHome">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" @onclick="GoToMyBlogs">My Blogs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" @onclick="GoToAbout">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" @onclick="GoToContact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">@username</span>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-danger" @onclick="SignOut">Sign Out</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- Page Content -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    @if (blog != null)
+                    {
+                        <!-- Blog Title -->
+                        <h2 class="fw-light">@blog.Title</h2>
+                        <!-- Blog Content -->
+                        <p>@blog.Content</p>
+                        <!-- Submitted By -->
+                        <p>Submitted By: @submittedBy</p>
+                        <hr />
+                        <!-- Submit Comment Form -->
+                        <form @onsubmit="SubmitComment">
+                            <div class="mb-3">
+                                <label for="commentContent" class="form-label">Comment</label>
+                                <textarea class="form-control" id="commentContent" rows="3" @bind="commentContent"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Comment</button>
+                        </form>
+                        <!-- Comments Section -->
+                        <h3 class="fw-light">Comments</h3>
+                        <!-- Display Comments (if any) -->
+                        @if (comments != null && comments.Count > 0)
+                        {
+                            @foreach (var comment in comments)
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <!-- Display author's username -->
+                                        <p class="card-text"><strong>@comment.Author:</strong> @comment.CommentContent</p>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p>No comments yet.</p>
+                        }
+                    }
+                    else
+                    {
+                        <p>Blog not found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    // Blog object
+    BlogModel blog;
+
+    // List of comments
+    List<CommentModel> comments;
+
+    // User who submitted the blog
+    string submittedBy;
+
+    // Comment field
+    string commentContent = "";
+
+    [Parameter]
+    public string blogId { get; set; }
+
+    [Parameter]
+    public string username { get; set; }
+
+    // Removed unused parameter
+    // [Parameter]
+    // public string author { get; set; }
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            if (int.TryParse(blogId, out int id))
+            {
+                blog = BlogService.GetBlogById(id);
+
+                if (blog != null)
+                {
+                    var user = UserService.GetUserById(blog.UserId);
+                    submittedBy = user != null ? user.Username : "Unknown";
+                    comments = CommentService.GetCommentsForBlog(id);
+                }
+                else
+                {
+                    // Handle case where blog is not found
+                    NavigationManager.NavigateTo($"/Home/{username}");
+                    return;
+                }
+            }
+            else
+            {
+                // Handle case where blogId is not a valid integer
+                NavigationManager.NavigateTo("/error");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any unexpected exceptions
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            
+            return;
+        }
+    }
+
+
+    private void SubmitComment()
+    {
+        // Get the user ID by invoking the method
+        int userId = UserService.GetUserIdByUsername(username);
+
+        // Create a new comment model
+        var newComment = new CommentModel
+            {
+                UserId = userId,
+                CommentContent = commentContent,
+                BlogId = int.Parse(blogId), // Parse the blogId parameter
+                Author = username // Use the username parameter as the author
+            };
+
+        // Add the comment to the database
+        CommentService.SubmitComment(newComment);
+
+        // Refresh the comments list
+        comments = CommentService.GetCommentsForBlog(int.Parse(blogId));
+
+        // Clear the comment content
+        commentContent = "";
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo($"/Home/{username}");
+    }
+
+    private void GoToMyBlogs()
+    {
+        NavigationManager.NavigateTo($"/myblogs/{username}");
+    }
+
+    private void GoToAbout()
+    {
+        NavigationManager.NavigateTo($"/about/{username}");
+    }
+
+    private void GoToContact()
+    {
+        NavigationManager.NavigateTo($"/contact/{username}");
+    }
+
+    private void SignOut()
+    {
+        UserState.UserID = 0;
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
+
+<style>
+    .background-wrapper {
+        background-image: url('/images/body2.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        padding-top: 20px;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+</style>

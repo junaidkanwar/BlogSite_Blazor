@@ -1,0 +1,39 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime js
+<PageTitle>2J-Blogs</PageTitle>
+
+<div class="background-wrapper">
+    <div class="container py-5">
+        <div class="card mx-auto shadow" style="max-width: 1000px;">
+            <!-- Main Layout Header -->
+            
+            <div class="card-body">
+                @Body
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Layout Footer -->
+<Footer />
+
+<style>
+    .background-wrapper {
+        background-image: url('/images/body3.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        padding-top: 20px;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 8px;
+    }
+</style>

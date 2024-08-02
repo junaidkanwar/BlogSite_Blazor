@@ -1,0 +1,158 @@
+﻿@page "/myblogs/{username}"
+@using BlogSite.Models
+@inject BlogService BlogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject BlogSite.Data.UserService UserService
+@inject UserState UserState
+@inject NavigationManager NavigationManager
+
+
+@if (username == null)
+{
+    <div class="container text-center py-5 my-5">
+        <h2>You're not logged in</h2>
+        <p>Kindly Login to Gain Access</p>
+        <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+    </div>
+}
+else
+{
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow fixed-top">
+    <div class="container">
+            <a class="navbar-brand" @onclick="GoToHome">2J BLOGS.</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" @onclick="GoToHome">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToMyBlogs">My Blogs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToAbout">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" @onclick="GoToContact">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link">@username</span>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-danger" @onclick="SignOut">Sign Out</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<h3>My Blogs : @username</h3>
+
+@if (blogs != null && blogs.Any())
+{
+    <ul>
+        @foreach (var blog in blogs)
+        {
+            <li>
+                <a href="@($"blog/{blog.BlogId}/{username}")">@blog.Title</a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No blogs to show</p>
+}
+}
+@code {
+    private List<BlogModel> blogs;
+    [Parameter]
+    public string username { get; set; }
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            // Fetch the user's blogs from the database using the username
+            var user = UserService.GetUserByUsername(username);
+            if (user != null)
+            {
+                blogs = BlogService.GetBlogsByUserId(user.UserId);
+            }
+            else
+            {
+                // Handle the case where the user is not found
+                NavigationManager.NavigateTo("/error");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any unexpected exceptions
+            Console.WriteLine($"An error occurred: {ex.Message}");
+
+            return;
+        }
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo($"/Home/{username}");
+    }
+
+    private void GoToMyBlogs()
+    {
+        NavigationManager.NavigateTo($"/myblogs/{username}");
+    }
+
+    private void GoToAbout()
+    {
+        NavigationManager.NavigateTo($"/about/{username}");
+    }
+
+    private void GoToContact()
+    {
+        NavigationManager.NavigateTo($"/contact/{username}");
+    }
+
+    private void ViewBlog(int blogId)
+    {
+        NavigationManager.NavigateTo($"/blog/{blogId}/{username}");
+    }
+
+    private void SignOut()
+    {
+        UserState.UserID = 0;
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
+
+
+<style>
+    .background-wrapper {
+        background-image: url('/images/body2.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        padding-top: 20px;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+</style>

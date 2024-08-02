@@ -1,0 +1,18 @@
+﻿@page "/error"
+
+@layout NoMenuLayout
+@inject NavigationManager NavigationManager
+
+<h3>error</h3>
+<div class="container text-center py-5 my-5">
+            <h2>You're not logged in</h2>
+            <p>Kindly Login to Gain Access</p>
+            <button class="btn btn-outline-primary" @onclick="HandleLogin">Login</button>
+        </div>
+
+@code {
+    private void HandleLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
